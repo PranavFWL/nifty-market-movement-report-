@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>NIFTY Straddle Range Report</title>
+  <title>Nifty50 Analysis</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@500;600&display=swap"
     rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -75,26 +75,6 @@
       display: flex;
       align-items: center;
       gap: 7px;
-    }
-
-    .dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--accent);
-      animation: blink 2.2s ease-in-out infinite;
-    }
-
-    @keyframes blink {
-
-      0%,
-      100% {
-        opacity: 1
-      }
-
-      50% {
-        opacity: .2
-      }
     }
 
     .body {
@@ -296,11 +276,7 @@
 <body>
 
   <div class="hdr">
-    <div class="logo">NIFTY <em>/ Straddle Range Report</em></div>
-    <div class="meta-bar">
-      <div class="dot"></div>
-      <span id="meta-txt">—</span>
-    </div>
+    <div class="logo">Nifty50 Analysis</div>
   </div>
 
   <div class="body">
@@ -885,18 +861,15 @@
         document.getElementById('dash').style.display = 'block';
 
         const m = D.meta;
-        document.getElementById('meta-txt').textContent =
-          `${m.symbol}  ·  ${Number(m.daily_rows).toLocaleString()} daily bars  ·  ${m.from} → ${m.to}`;
-
         const ty = m.total_years || 10;
 
         // Build dropdowns — each selector built exactly once
-        buildDrop('selDY', ty, 0);
+        buildDrop('selDY', ty, 5);
         buildDayDrop('selDS', '28');
         buildDayDrop('selGS', '28');   // gap series dropdown
-        buildDrop('selWY', ty, 0);
+        buildDrop('selWY', ty, 5);
         buildWeekDrop('selWS');
-        buildDrop('selMY', ty, 0);
+        buildDrop('selMY', ty, 5);
         buildMonthDrop('selMS');
 
         // Render daily tab (visible on load)
