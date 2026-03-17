@@ -157,4 +157,4 @@ if __name__ == '__main__':
     try:
         while True: time.sleep(1)
     except KeyboardInterrupt:
-        print('\nServer stopped.')
+        print('\nServer has been stopped.')
