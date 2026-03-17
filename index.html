@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>NIFTY Straddle Range Report</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@500;600&display=swap"
+    rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    :root {
+      --bg: #0d0f0e;
+      --surface: #131514;
+      --s2: #191b1a;
+      --border: #252826;
+      --b2: #2f332f;
+      --text: #e4e7e4;
+      --muted: #8a8e87;
+      --grid: #1a1c1b;
+      --tick: #8a8e87;
+      --accent: #b5f542;
+      --blue: #5aaee8;
+      --amber: #f0a742;
+      --red: #e05252;
+      --mono: 'DM Mono', monospace;
+      --head: 'Syne', sans-serif;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .hdr {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 32px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .logo {
+      font-family: var(--head);
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: -.02em;
+    }
+
+    .logo em {
+      color: var(--muted);
+      font-style: normal;
+      font-weight: 500;
+    }
+
+    .meta-bar {
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: blink 2.2s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .2
+      }
+    }
+
+    .body {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 32px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 4px;
+      width: fit-content;
+    }
+
+    .tab {
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 7px 22px;
+      border: none;
+      border-radius: 7px;
+      cursor: pointer;
+      background: transparent;
+      color: var(--muted);
+      transition: all .15s;
+    }
+
+    .tab:hover {
+      color: var(--text);
+      background: var(--s2);
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: #0d0f0e;
+      font-weight: 500;
+    }
+
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    .sub-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .sub-title {
+      font-family: var(--head);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .sub-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .sub-desc {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    select {
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 6px 12px;
+      border: 1px solid var(--b2);
+      border-radius: 7px;
+      background: var(--s2);
+      color: var(--text);
+      cursor: pointer;
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    select:focus {
+      border-color: var(--accent);
+    }
+
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 40px;
+    }
+
+    @media (max-width: 700px) {
+      .grid2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 18px;
+    }
+
+    .card-title {
+      font-family: var(--head);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+
+    .card-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+      height: 190px;
+    }
+
+    .legend {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 14px;
+      font-size: 11px;
+      color: var(--muted);
+      flex-wrap: wrap;
+    }
+
+    .legend span {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .lb {
+      width: 16px;
+      height: 2px;
+      border-radius: 1px;
+      display: inline-block;
+    }
+
+    .state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 400px;
+      gap: 14px;
+      color: var(--muted);
+    }
+
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--b2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .err {
+      font-size: 12px;
+      color: var(--red);
+      text-align: center;
+      line-height: 2;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="hdr">
+    <div class="logo">NIFTY <em>/ Straddle Range Report</em></div>
+    <div class="meta-bar">
+      <div class="dot"></div>
+      <span id="meta-txt">—</span>
+    </div>
+  </div>
+
+  <div class="body">
+    <div id="loading" class="state">
+      <div class="spinner"></div><span>Loading…</span>
+    </div>
+    <div id="errbox" class="state" style="display:none">
+      <div class="err" id="errmsg"></div>
+    </div>
+
+    <div id="dash" style="display:none">
+
+      <!-- tabs -->
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('daily', this)">Daily</button>
+        <button class="tab" onclick="switchTab('weekly', this)">Weekly</button>
+        <button class="tab" onclick="switchTab('monthly', this)">Monthly</button>
+      </div>
+
+      <!-- ══ DAILY ══ -->
+      <div id="sec-daily" class="section active">
+
+        <!-- Per day -->
+        <div class="sub-hdr">
+          <div class="sub-title">Per day</div>
+          <select id="selDS" onchange="updateDS()"></select>
+        </div>
+        <p class="sub-desc">Each data point = one daily candle's range</p>
+        <div class="grid2">
+          <div class="card">
+            <div class="card-title">Max range (H−L)</div>
+            <div class="card-sub">(High − Low) / Open %</div>
+            <div class="chart-wrap"><canvas id="ds-max"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Closing range (|O−C|)</div>
+            <div class="card-sub">|Open − Close| / Open %</div>
+            <div class="chart-wrap"><canvas id="ds-close"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Upper range (H−O)</div>
+            <div class="card-sub">(High − Open) / Open %</div>
+            <div class="chart-wrap"><canvas id="ds-upper"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Lower range (O−L)</div>
+            <div class="card-sub">(Open − Low) / Open %</div>
+            <div class="chart-wrap"><canvas id="ds-lower"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Gap up / Gap down -->
+        <div class="sub-hdr">
+          <div class="sub-title">Gap up / Gap down</div>
+          <select id="selGS" onchange="updateGS()"></select>
+        </div>
+        <p class="sub-desc">Gap % = (Today Open − Yesterday Close) / Yesterday Close × 100 &nbsp;·&nbsp; Green = gap up
+          &nbsp;·&nbsp; Red = gap down</p>
+        <div class="grid2">
+          <div class="card">
+            <div class="card-title">Gap per day</div>
+            <div class="card-sub">Each bar = one day's gap %</div>
+            <div class="chart-wrap"><canvas id="gs-daily"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Yearly avg gap</div>
+            <div class="card-sub">Average gap % per year</div>
+            <div class="chart-wrap"><canvas id="gy-avg"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Yearly max gap up</div>
+            <div class="card-sub">Biggest single gap up per year</div>
+            <div class="chart-wrap"><canvas id="gy-max"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Yearly max gap down</div>
+            <div class="card-sub">Biggest single gap down per year</div>
+            <div class="chart-wrap"><canvas id="gy-min"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Yearly average -->
+        <div class="sub-hdr">
+          <div class="sub-title">Yearly average</div>
+          <select id="selDY" onchange="updateDY()"></select>
+        </div>
+        <p class="sub-desc">Avg · worst · calmest daily candle range per year</p>
+        <div class="legend">
+          <span><span class="lb" style="background:var(--accent)"></span>Avg</span>
+          <span><span class="lb" style="background:var(--blue)"></span>Max (worst day)</span>
+          <span><span class="lb" style="background:var(--red)"></span>Min (calmest day)</span>
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <div class="card-title">Max range (H−L)</div>
+            <div class="card-sub">Avg · worst · calmest day per year</div>
+            <div class="chart-wrap"><canvas id="dy-max"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Closing range (|O−C|)</div>
+            <div class="card-sub">Avg · worst · calmest day per year</div>
+            <div class="chart-wrap"><canvas id="dy-close"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Upper range (H−O)</div>
+            <div class="card-sub">Avg · worst · calmest day per year</div>
+            <div class="chart-wrap"><canvas id="dy-upper"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Lower range (O−L)</div>
+            <div class="card-sub">Avg · worst · calmest day per year</div>
+            <div class="chart-wrap"><canvas id="dy-lower"></canvas></div>
+          </div>
+        </div>
+
+      </div><!-- /daily -->
+
+      <!-- ══ WEEKLY ══ -->
+      <div id="sec-weekly" class="section">
+        <div class="sub-hdr">
+          <div class="sub-title">Per week</div>
+          <select id="selWS" onchange="updateWS()"></select>
+        </div>
+        <p class="sub-desc">Each data point = one weekly candle's actual range</p>
+        <div class="grid2">
+          <div class="card">
+            <div class="card-title">Max range (H−L)</div>
+            <div class="card-sub">(High − Low) / Open %</div>
+            <div class="chart-wrap"><canvas id="ws-max"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Closing range (|O−C|)</div>
+            <div class="card-sub">|Open − Close| / Open %</div>
+            <div class="chart-wrap"><canvas id="ws-close"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Upper range (H−O)</div>
+            <div class="card-sub">(High − Open) / Open %</div>
+            <div class="chart-wrap"><canvas id="ws-upper"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Lower range (O−L)</div>
+            <div class="card-sub">(Open − Low) / Open %</div>
+            <div class="chart-wrap"><canvas id="ws-lower"></canvas></div>
+          </div>
+        </div>
+
+        <div class="sub-hdr">
+          <div class="sub-title">Yearly average</div>
+          <select id="selWY" onchange="updateWY()"></select>
+        </div>
+        <p class="sub-desc">Avg · worst · calmest weekly candle range per year</p>
+        <div class="legend">
+          <span><span class="lb" style="background:var(--accent)"></span>Avg</span>
+          <span><span class="lb" style="background:var(--blue);opacity:.7;border-top:2px dashed var(--blue)"></span>Max
+            (worst week)</span>
+          <span><span class="lb" style="background:var(--red);opacity:.7;border-top:2px dashed var(--red)"></span>Min
+            (calmest week)</span>
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <div class="card-title">Max range (H−L)</div>
+            <div class="card-sub">Avg · worst · calmest week per year</div>
+            <div class="chart-wrap"><canvas id="wy-max"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Closing range (|O−C|)</div>
+            <div class="card-sub">Avg · worst · calmest week per year</div>
+            <div class="chart-wrap"><canvas id="wy-close"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Upper range (H−O)</div>
+            <div class="card-sub">Avg · worst · calmest week per year</div>
+            <div class="chart-wrap"><canvas id="wy-upper"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Lower range (O−L)</div>
+            <div class="card-sub">Avg · worst · calmest week per year</div>
+            <div class="chart-wrap"><canvas id="wy-lower"></canvas></div>
+          </div>
+        </div>
+
+      </div><!-- /weekly -->
+
+      <!-- ══ MONTHLY ══ -->
+      <div id="sec-monthly" class="section">
+        <div class="sub-hdr">
+          <div class="sub-title">Per month</div>
+          <select id="selMS" onchange="updateMS()"></select>
+        </div>
+        <p class="sub-desc">Each data point = one monthly candle's actual range</p>
+        <div class="grid2">
+          <div class="card">
+            <div class="card-title">Max range (H−L)</div>
+            <div class="card-sub">(High − Low) / Open %</div>
+            <div class="chart-wrap"><canvas id="ms-max"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Closing range (|O−C|)</div>
+            <div class="card-sub">|Open − Close| / Open %</div>
+            <div class="chart-wrap"><canvas id="ms-close"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Upper range (H−O)</div>
+            <div class="card-sub">(High − Open) / Open %</div>
+            <div class="chart-wrap"><canvas id="ms-upper"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Lower range (O−L)</div>
+            <div class="card-sub">(Open − Low) / Open %</div>
+            <div class="chart-wrap"><canvas id="ms-lower"></canvas></div>
+          </div>
+        </div>
+
+        <div class="sub-hdr">
+          <div class="sub-title">Yearly stats</div>
+          <select id="selMY" onchange="updateMY()"></select>
+        </div>
+        <p class="sub-desc">Avg · worst · calmest monthly candle range per year</p>
+        <div class="legend">
+          <span><span class="lb" style="background:var(--accent)"></span>Avg</span>
+          <span><span class="lb" style="background:var(--blue)"></span>Max (worst month)</span>
+          <span><span class="lb" style="background:var(--red)"></span>Min (calmest month)</span>
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <div class="card-title">Max range (H−L)</div>
+            <div class="card-sub">Avg · worst · calmest month per year</div>
+            <div class="chart-wrap"><canvas id="my-max"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Closing range (|O−C|)</div>
+            <div class="card-sub">Avg · worst · calmest month per year</div>
+            <div class="chart-wrap"><canvas id="my-close"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Upper range (H−O)</div>
+            <div class="card-sub">Avg · worst · calmest month per year</div>
+            <div class="chart-wrap"><canvas id="my-upper"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Lower range (O−L)</div>
+            <div class="card-sub">Avg · worst · calmest month per year</div>
+            <div class="chart-wrap"><canvas id="my-lower"></canvas></div>
+          </div>
+        </div>
+
+      </div><!-- /monthly -->
+
+    </div><!-- /dash -->
+  </div>
+
+  <script>
+    const COLORS = ['#b5f542', '#5aaee8', '#f0a742', '#e05252'];
+    const METRICS = ['max_range_pct', 'closing_range_pct', 'upper_range_pct', 'lower_range_pct'];
+    const GRID = '#1a1c1b', TICK = '#8a8e87', MONO = "'DM Mono'";
+
+    let D = null;
+    const CH = {};   // chart instances keyed by canvas id
+
+    // ── tab switch ────────────────────────────────────────────
+    function switchTab(id, el) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('sec-' + id).classList.add('active');
+      if (id === 'daily') { updateDY(); updateDS(); updateGS(); }
+      if (id === 'weekly') { updateWY(); updateWS(); }
+      if (id === 'monthly') { updateMY(); updateMS(); }
+    }
+
+    // ── shared chart options ──────────────────────────────────
+    function makeOpts(n) {
+      return {
+        responsive: true, maintainAspectRatio: false, animation: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#191b1a', borderColor: '#2f332f', borderWidth: 1,
+            titleColor: '#b5f542', bodyColor: '#e4e7e4', padding: 12,
+            titleFont: { family: MONO, size: 11 }, bodyFont: { family: MONO, size: 11 },
+            callbacks: { label: c => `  ${c.dataset.label}: ${c.parsed.y.toFixed(3)}%` }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: TICK, font: { family: MONO, size: 11 }, maxRotation: 45, maxTicksLimit: Math.min(n, 20), autoSkip: true },
+            grid: { color: GRID }, border: { color: '#2a2e2b' }
+          },
+          y: {
+            ticks: { color: TICK, font: { family: MONO, size: 11 }, callback: v => v.toFixed(2) + '%' },
+            grid: { color: GRID }, border: { color: '#2a2e2b' }
+          }
+        }
+      };
+    }
+
+    // ── draw 3-line yearly chart (avg / max / min) ────────────
+    function drawYearly(id, labels, avgs, highs, lows) {
+      if (!labels.length) return;
+      const cfg = {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Avg', data: avgs, borderColor: '#b5f542', backgroundColor: '#b5f54215', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#b5f542', tension: 0.3, fill: true },
+            { label: 'Max', data: highs, borderColor: '#5aaee8', backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [5, 4], pointRadius: 2, pointBackgroundColor: '#5aaee8', tension: 0.3, fill: false },
+            { label: 'Min', data: lows, borderColor: '#e05252', backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [5, 4], pointRadius: 2, pointBackgroundColor: '#e05252', tension: 0.3, fill: false },
+          ]
+        },
+        options: makeOpts(labels.length)
+      };
+      if (CH[id]) { CH[id].destroy(); delete CH[id]; }
+      const canvas = document.getElementById(id);
+      if (canvas) CH[id] = new Chart(canvas, cfg);
+    }
+
+    // ── draw single-line series chart ─────────────────────────
+    function drawSeries(id, labels, values, color) {
+      if (!labels.length) return;
+      const cfg = {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Range', data: values,
+            borderColor: color, backgroundColor: color + '15',
+            borderWidth: 2,
+            pointRadius: labels.length > 80 ? 0 : 2,
+            pointBackgroundColor: color, tension: 0.3, fill: true,
+          }]
+        },
+        options: makeOpts(labels.length)
+      };
+      if (CH[id]) { CH[id].destroy(); delete CH[id]; }
+      const canvas = document.getElementById(id);
+      if (canvas) CH[id] = new Chart(canvas, cfg);
+    }
+
+    // ── draw gap bar chart (green up / red down) ──────────────
+    function drawGapBars(id, labels, values) {
+      if (!labels || !labels.length) return;
+      const bgColors = values.map(v => v >= 0 ? 'rgba(181,245,66,0.75)' : 'rgba(224,82,82,0.75)');
+      const brdColors = values.map(v => v >= 0 ? '#b5f542' : '#e05252');
+      if (CH[id]) { CH[id].destroy(); delete CH[id]; }
+      const canvas = document.getElementById(id);
+      if (!canvas) return;
+      CH[id] = new Chart(canvas, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            data: values,
+            backgroundColor: bgColors,
+            borderColor: brdColors,
+            borderWidth: 1,
+            borderRadius: 2,
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, animation: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#191b1a', borderColor: '#2f332f', borderWidth: 1,
+              titleColor: '#b5f542', bodyColor: '#e4e7e4', padding: 10,
+              titleFont: { family: MONO, size: 11 }, bodyFont: { family: MONO, size: 11 },
+              callbacks: {
+                label: c => `  ${c.parsed.y >= 0 ? 'Gap up' : 'Gap down'}: ${c.parsed.y >= 0 ? '+' : ''}${c.parsed.y.toFixed(3)}%`
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: { color: TICK, font: { family: MONO, size: 11 }, maxRotation: 45, maxTicksLimit: 20, autoSkip: true },
+              grid: { color: GRID }, border: { color: '#2a2e2b' }
+            },
+            y: {
+              ticks: { color: TICK, font: { family: MONO, size: 11 }, callback: v => (v >= 0 ? '+' : '') + v.toFixed(2) + '%' },
+              grid: { color: GRID }, border: { color: '#2a2e2b' }
+            }
+          }
+        }
+      });
+    }
+
+    // ── render 4 yearly charts (avg/max/min per metric) ───────
+    function renderYearly4(ids, rows) {
+      if (!rows || !rows.length) return;
+      const labels = rows.map(r => String(r.year));
+      METRICS.forEach((m, i) => {
+        drawYearly(ids[i], labels,
+          rows.map(r => +(r[m + '_avg'] || 0)),
+          rows.map(r => +(r[m + '_high'] || 0)),
+          rows.map(r => +(r[m + '_low'] || 0))
+        );
+      });
+    }
+
+    // ── render 4 series charts (one value per period) ─────────
+    function renderSeries4(ids, rows, labelKey, colors) {
+      if (!rows || !rows.length) return;
+      const labels = rows.map(r => String(r[labelKey]));
+      METRICS.forEach((m, i) => {
+        drawSeries(ids[i], labels, rows.map(r => +(r[m] || 0)), colors[i]);
+      });
+    }
+
+    // ── filter helpers ────────────────────────────────────────
+    function filterYearly(src, selId) {
+      const val = document.getElementById(selId).value;
+      if (!src || !src.length || val === 'all') return src;
+      const yrs = parseInt(val);
+      const last = src[src.length - 1].year;
+      return src.filter(r => r.year >= last - yrs + 1);
+    }
+
+    function filterByDays(src, selId, dtKey) {
+      // dtKey is the field name containing a 'YYYY-MM-DD' string
+      const val = document.getElementById(selId).value;
+      if (!src || !src.length) return src;
+      const lastRow = src[src.length - 1];
+      if (!lastRow[dtKey]) return src;
+      const days = parseInt(val);
+      const lastDt = new Date(lastRow[dtKey].replace(/-/g, '/'));
+      const cutoff = new Date(lastDt);
+      cutoff.setDate(cutoff.getDate() - days);
+      const cy = cutoff.getFullYear();
+      const cm = String(cutoff.getMonth() + 1).padStart(2, '0');
+      const cd = String(cutoff.getDate()).padStart(2, '0');
+      const cutoffStr = `${cy}-${cm}-${cd}`;
+      return src.filter(r => r[dtKey] && r[dtKey] >= cutoffStr);
+    }
+
+    function filterMonthlySeries(src, selId) {
+      const val = document.getElementById(selId).value;
+      if (!src || !src.length) return src;
+      const months = parseInt(val);
+      const last = src[src.length - 1].ym;
+      const [ly, lm] = last.split('-').map(Number);
+      let cy = ly, cm = lm - months;
+      while (cm <= 0) { cm += 12; cy -= 1; }
+      const cutoff = `${cy}-${String(cm).padStart(2, '0')}`;
+      return src.filter(r => r.ym >= cutoff);
+    }
+
+    // ── update gap charts ─────────────────────────────────────
+    // FIX: single canonical updateGS() — no more duplicates.
+    // gap_series rows: { dt, ym, label, gap_pct }
+    // gap_yearly rows: { year, avg, max, min }
+    // Canvas IDs:      gs-daily, gy-avg, gy-max, gy-min
+    function updateGS() {
+      if (!D || !D.gap_series || !D.gap_series.length) return;
+      if (!D.gap_yearly || !D.gap_yearly.length) return;
+
+      // Per-day gap bars (filtered by selGS day-range dropdown)
+      const series = filterByDays(D.gap_series, 'selGS', 'dt');
+      drawGapBars('gs-daily', series.map(r => r.label), series.map(r => +(r.gap_pct || 0)));
+
+      // Yearly charts — always show all years
+      const yLabels = D.gap_yearly.map(r => String(r.year));
+      drawGapBars('gy-avg', yLabels, D.gap_yearly.map(r => +(r.avg || 0)));
+      drawGapBars('gy-max', yLabels, D.gap_yearly.map(r => +(r.max || 0)));
+      drawGapBars('gy-min', yLabels, D.gap_yearly.map(r => +(r.min || 0)));
+    }
+
+    // ── update daily range charts ─────────────────────────────
+    function updateDY() {
+      if (!D.daily_yearly || !D.daily_yearly.length) { console.warn('daily_yearly missing'); return; }
+      renderYearly4(['dy-max', 'dy-close', 'dy-upper', 'dy-lower'],
+        filterYearly(D.daily_yearly, 'selDY'));
+    }
+
+    function updateDS() {
+      if (!D.daily_series || !D.daily_series.length) { console.warn('daily_series missing'); return; }
+      renderSeries4(['ds-max', 'ds-close', 'ds-upper', 'ds-lower'],
+        filterByDays(D.daily_series, 'selDS', 'dt'), 'label', COLORS);
+    }
+
+    // ── update weekly charts ──────────────────────────────────
+    function updateWY() {
+      renderYearly4(['wy-max', 'wy-close', 'wy-upper', 'wy-lower'],
+        filterYearly(D.weekly_yearly, 'selWY'));
+    }
+
+    function updateWS() {
+      renderSeries4(['ws-max', 'ws-close', 'ws-upper', 'ws-lower'],
+        filterByDays(D.weekly_series, 'selWS', 'dt'), 'label', COLORS);
+    }
+
+    // ── update monthly charts ─────────────────────────────────
+    function updateMY() {
+      renderYearly4(['my-max', 'my-close', 'my-upper', 'my-lower'],
+        filterYearly(D.monthly_yearly, 'selMY'));
+    }
+
+    function updateMS() {
+      renderSeries4(['ms-max', 'ms-close', 'ms-upper', 'ms-lower'],
+        filterMonthlySeries(D.monthly_series, 'selMS'), 'label', COLORS);
+    }
+
+    // ── dropdown builders ─────────────────────────────────────
+    function buildDrop(selId, totalYears, defaultYrs) {
+      const sel = document.getElementById(selId);
+      const OPTS = [[1, 'Last 1 year'], [2, 'Last 2 years'], [3, 'Last 3 years'],
+      [5, 'Last 5 years'], [10, 'Last 10 years'], [15, 'Last 15 years'], [20, 'Last 20 years']];
+      OPTS.forEach(([y, lbl]) => {
+        if (y > totalYears) return;
+        const o = document.createElement('option');
+        o.value = String(y); o.textContent = lbl;
+        if (y === defaultYrs) o.selected = true;
+        sel.appendChild(o);
+      });
+      const all = document.createElement('option');
+      all.value = 'all'; all.textContent = 'All time';
+      if (defaultYrs === 0 || totalYears < 1) all.selected = true;
+      sel.appendChild(all);
+    }
+
+    function buildDayDrop(selId, defaultVal) {
+      const sel = document.getElementById(selId);
+      const OPTS = [
+        ['7', 'Last 1 week'],
+        ['14', 'Last 2 weeks'],
+        ['21', 'Last 3 weeks'],
+        ['28', 'Last 4 weeks'],
+        ['60', 'Last 2 months'],
+        ['90', 'Last 3 months'],
+      ];
+      const def = defaultVal || '28';
+      OPTS.forEach(([v, lbl]) => {
+        const o = document.createElement('option');
+        o.value = v; o.textContent = lbl;
+        if (v === def) o.selected = true;
+        sel.appendChild(o);
+      });
+    }
+
+    function buildWeekDrop(selId) {
+      const sel = document.getElementById(selId);
+      const OPTS = [
+        ['7', 'Last 1 week'],
+        ['14', 'Last 2 weeks'],
+        ['30', 'Last 1 month'],
+        ['90', 'Last 3 months'],
+        ['180', 'Last 6 months'],
+        ['365', 'Last 1 year'],
+      ];
+      OPTS.forEach(([v, lbl]) => {
+        const o = document.createElement('option');
+        o.value = v; o.textContent = lbl;
+        if (v === '365') o.selected = true;
+        sel.appendChild(o);
+      });
+    }
+
+    function buildMonthDrop(selId) {
+      const sel = document.getElementById(selId);
+      const OPTS = [
+        ['1', 'Last 1 month'],
+        ['3', 'Last 3 months'],
+        ['6', 'Last 6 months'],
+        ['12', 'Last 1 year'],
+      ];
+      OPTS.forEach(([v, lbl]) => {
+        const o = document.createElement('option');
+        o.value = v; o.textContent = lbl;
+        if (v === '12') o.selected = true;
+        sel.appendChild(o);
+      });
+    }
+
+    // ── init ──────────────────────────────────────────────────
+    async function init() {
+      try {
+        const res = await fetch('data.json');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        D = await res.json();
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('dash').style.display = 'block';
+
+        const m = D.meta;
+        document.getElementById('meta-txt').textContent =
+          `${m.symbol}  ·  ${Number(m.daily_rows).toLocaleString()} daily bars  ·  ${m.from} → ${m.to}`;
+
+        const ty = m.total_years || 10;
+
+        // Build dropdowns — each selector built exactly once
+        buildDrop('selDY', ty, 0);
+        buildDayDrop('selDS', '28');
+        buildDayDrop('selGS', '28');   // gap series dropdown
+        buildDrop('selWY', ty, 0);
+        buildWeekDrop('selWS');
+        buildDrop('selMY', ty, 0);
+        buildMonthDrop('selMS');
+
+        // Render daily tab (visible on load)
+        updateDY();
+        updateDS();
+        updateGS();
+
+      } catch (e) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('errbox').style.display = 'flex';
+        document.getElementById('errmsg').innerHTML =
+          `Could not load <code>data.json</code>.<br>${e.message}<br><br>` +
+          `Run <code>python nifty_report.py</code> first, then refresh.`;
+      }
+    }
+
+    init();
+  </script>
+</body>
+
+</html>
